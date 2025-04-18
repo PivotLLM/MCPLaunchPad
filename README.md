@@ -1,6 +1,6 @@
 # MCPLaunchPad
 
-This project servers as an example and a shell for an MCP server. Tools can be added in mcpserver/tools.go
+This project serves as an example and a shell for an MCP server. Tools can be added in mcpserver/tools.go
 
 **CAUTION: This server is intended for local use and currently does not authenticate incoming requests because a standard interoperable mechanism for MCP clients to authenticate to MCP servers does not exist. It is hard-coded to listen on the localhost interface. Do not change this unless you are confident that you fully understand the risks and consequences.**
 
