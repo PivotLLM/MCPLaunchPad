@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// This software is licensed under the MIT License (see LICENSE for details).
+
 package main
 
 import (
@@ -19,10 +22,11 @@ const (
 
 func main() {
 	var err error
+	var listen string
 
 	// Define command line flags
 	debugFlag := flag.Bool("debug", true, "Enable debug mode")
-	listenFlag := flag.String("listen", "localhost:8888", "Address to listen on (e.g., localhost:8888)")
+	portFlag := flag.Int("port", 8888, "Port to listen on")
 	helpFlag := flag.Bool("help", false, "Show help information")
 	versionFlag := flag.Bool("version", false, "Show version information")
 
@@ -51,7 +55,12 @@ func main() {
 
 	// Use the flag values
 	debug := *debugFlag
-	mcpserverListen := *listenFlag
+
+	if *portFlag > 0 && *portFlag < 65536 {
+		listen = fmt.Sprintf("localhost:%d", *portFlag)
+	} else {
+		listen = "localhost:8888"
+	}
 
 	logger, err := mlogger.New(
 		mlogger.WithPrefix("MCP"),
@@ -67,7 +76,7 @@ func main() {
 
 	// Create MCP server
 	mcp, err := mcpserver.New(
-		mcpserver.WithListen(mcpserverListen),
+		mcpserver.WithListen(listen),
 		mcpserver.WithDebug(debug),
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
@@ -82,7 +91,6 @@ func main() {
 	if err = mcp.Start(); err != nil {
 		logger.Fatalf("MCP server failed to start: %v", err)
 	}
-	logger.Infof("MCP server started on %s", mcpserverListen)
 
 	// Set up signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
