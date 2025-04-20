@@ -45,7 +45,7 @@ func (c *Config) Register() []global.ToolDefinition {
 				},
 				{
 					Name:        "radius",
-					Description: "The radius of the widget.",
+					Description: "The radius of the widget (optional).",
 					Required:    false,
 				},
 			},
