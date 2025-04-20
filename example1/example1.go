@@ -10,8 +10,10 @@ var _ global.ToolProvider = (*Config)(nil)
 
 // Config serves as the package's object and holds configuration information
 type Config struct {
-	BaseURL string
-	Logger  global.Logger
+	BaseURL    string
+	AuthHeader string
+	AuthKey    string
+	Logger     global.Logger
 }
 
 // Option defines a function type for configuration options
@@ -21,6 +23,20 @@ type Option func(*Config)
 func WithBaseURL(baseURL string) Option {
 	return func(c *Config) {
 		c.BaseURL = baseURL
+	}
+}
+
+// WithAuthHeader sets the AuthHeader
+func WithAuthHeader(authHeader string) Option {
+	return func(c *Config) {
+		c.AuthHeader = authHeader
+	}
+}
+
+// WithAuthKey sets the AuthKey
+func WithAuthKey(authKey string) Option {
+	return func(c *Config) {
+		c.AuthKey = authKey
 	}
 }
 

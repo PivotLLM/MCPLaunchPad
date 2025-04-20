@@ -22,10 +22,22 @@ func (c *Config) httpPost(path string, data map[string]any) (string, error) {
 	// Build the full URL
 	url := c.BaseURL + path
 
-	// Make the HTTP POST request
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	// Create a new HTTP POST request
+	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonData))
 	if err != nil {
-		return "", fmt.Errorf("failed to make POST request: %w", err)
+		return "", fmt.Errorf("failed to create POST request: %w", err)
+	}
+
+	// Add authentication header
+	req.Header.Set(c.AuthHeader, c.AuthKey)
+
+	// Set Content-Type header to application/json
+	req.Header.Set("Content-Type", "application/json")
+
+	// Execute the request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute POST request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()

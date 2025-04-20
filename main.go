@@ -6,13 +6,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/PivotLLM/MCPLaunchPad/example2"
-	"github.com/PivotLLM/MCPLaunchPad/global"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
+
 	"github.com/PivotLLM/MCPLaunchPad/example1"
+	"github.com/PivotLLM/MCPLaunchPad/example2"
+	"github.com/PivotLLM/MCPLaunchPad/global"
 	"github.com/PivotLLM/MCPLaunchPad/mcpserver"
 	"github.com/PivotLLM/MCPLaunchPad/mlogger"
 )
@@ -76,10 +78,39 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Get the user's home directory if possible
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		envFile := homeDir + string(os.PathSeparator) + ".mcp"
+		err = godotenv.Load(envFile)
+		if err == nil {
+			logger.Infof("Loaded environment variables from %s", envFile)
+		}
+	}
+
+	// Load BaseURL and auth key from environment variables`
+	APIBaseURL := os.Getenv("API_BASE_URL")
+	if APIBaseURL == "" {
+		logger.Fatalf("API_BASE_URL environment variable is not set")
+		os.Exit(1)
+	}
+	APIAuthKey := os.Getenv("API_AUTH_KEY")
+	if APIAuthKey == "" {
+		logger.Fatalf("API_AUTH_KEY environment variable is not set")
+		os.Exit(1)
+	}
+	APIAuthHeader := os.Getenv("API_AUTH_HEADER")
+	if APIAuthHeader == "" {
+		logger.Fatalf("API_AUTH_HEADER environment variable is not set")
+		os.Exit(1)
+	}
+
 	// Create the example1 API tool provider with a hard-coded base URL
 	tp1 := example1.New(
 		example1.WithBaseURL("https://api.example.com/"),
 		example1.WithLogger(logger),
+		example1.WithAuthHeader(APIAuthHeader),
+		example1.WithAuthKey(APIAuthKey),
 	)
 
 	// Create the example2 time tool provider

@@ -33,10 +33,19 @@ func (c *Config) httpGet(path string, queryParams map[string]string) (string, er
 		fullURL.RawQuery = query.Encode()
 	}
 
-	// Make the HTTP GET request
-	resp, err := http.Get(fullURL.String())
+	// Create a new HTTP GET request
+	req, err := http.NewRequest("GET", fullURL.String(), nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to make GET request: %w", err)
+		return "", fmt.Errorf("failed to create GET request: %w", err)
+	}
+
+	// Add authentication header
+	req.Header.Set(c.AuthHeader, c.AuthKey)
+
+	// Execute the request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute GET request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
