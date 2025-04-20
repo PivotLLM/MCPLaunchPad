@@ -10,7 +10,7 @@ Package example1 demonstrates tools that communicates with an API. It includes s
 
 Package example2 implements a simple tool that returns the time.
 
-Note that the URL specified in main.go (api.example.com) does not exist, so every request provided by example1 will fail. Asking the LLM to get the time in 12 or 24 hour format (provided by example2) will work.
+Note that the URL specified in main.go (api.example.com) does not exist, so every request provided by example1 will fail. Asking the LLM to get the time in 12 or 24-hour format (provided by example2) will work.
 
 The mcpserver package calls the Register() function of each package to get the information required to register the tools the package provides.
 
