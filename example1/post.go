@@ -1,4 +1,4 @@
-package gavin
+package example1
 
 import (
 	"bytes"

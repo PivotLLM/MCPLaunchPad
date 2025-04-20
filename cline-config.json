@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "MCPLaunchPad": {
+      "disabled": false,
+      "timeout": 3600,
+      "url": "http://localhost:8888/sse",
+      "transportType": "sse"
+    }
+  }
+}

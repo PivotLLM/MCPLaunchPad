@@ -5,7 +5,7 @@ type ToolDefinition struct {
 	Name        string
 	Description string
 	Parameters  []ToolParameter
-	Handler     APIHandler
+	Handler     ToolHandler
 }
 
 // ToolParameter represents a parameter for a tool.
@@ -15,11 +15,11 @@ type ToolParameter struct {
 	Required    bool
 }
 
-// APIClient defines an interface for interacting with APIs and registering tools.
-type APIClient interface {
+// ToolProvider defines an interface for interacting with APIs and registering tools.
+type ToolProvider interface {
 	Register() []ToolDefinition
 }
 
-// APIHandler defines a function type for our tool handler. This avoids the API package
+// ToolHandler defines a function type for our tool handler. This avoids the API package
 // having to import definitions from the MCP server, etc.
-type APIHandler func(options map[string]any) (string, error)
+type ToolHandler func(options map[string]any) (string, error)

@@ -11,40 +11,44 @@ import (
 
 func (m *MCPServer) AddTools() {
 
-	// Call the Register function of the API client to get the tool definitions
-	toolDefinitions := m.apiClient.Register()
+	// Iterate over the tool providers and register their tools
+	for _, provider := range m.toolProviders {
 
-	// Iterate over the tool definitions and register each tool
-	for _, toolDef := range toolDefinitions {
+		// Call the Register function of the provider to get tool definitions
+		toolDefinitions := provider.Register()
 
-		// Combine description and parameters into a slice of options
-		toolOptions := []mcp.ToolOption{
-			mcp.WithDescription(toolDef.Description),
-		}
-		for _, param := range toolDef.Parameters {
-			toolOptions = append(toolOptions, mcp.WithString(param.Name, mcp.Description(param.Description)))
-		}
+		// Iterate over the tool definitions and register each tool
+		for _, toolDef := range toolDefinitions {
 
-		// Create the tool with all options
-		tool := mcp.NewTool(toolDef.Name, toolOptions...)
-
-		// Register the tool with the MCP server, creating a handler compatible with the MCP server
-		// that calls the tool's handler function with the provided options
-		m.srv.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-
-			// Copy the MCP arguments to a map
-			options := make(map[string]any)
-			for key, value := range req.Params.Arguments {
-				options[key] = value
+			// Combine description and parameters into a slice of options
+			toolOptions := []mcp.ToolOption{
+				mcp.WithDescription(toolDef.Description),
+			}
+			for _, param := range toolDef.Parameters {
+				toolOptions = append(toolOptions, mcp.WithString(param.Name, mcp.Description(param.Description)))
 			}
 
-			// Execute the tool's handler, passing the options
-			result, err := toolDef.Handler(options)
-			if err != nil {
-				return nil, err
-			}
+			// Create the tool with all options
+			tool := mcp.NewTool(toolDef.Name, toolOptions...)
 
-			return mcp.NewToolResultText(result), nil
-		})
+			// Register the tool with the MCP server, creating a handler compatible with the MCP server
+			// that calls the tool's handler function with the provided options
+			m.srv.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
+				// Copy the MCP arguments to a map
+				options := make(map[string]any)
+				for key, value := range req.Params.Arguments {
+					options[key] = value
+				}
+
+				// Execute the tool's handler, passing the options
+				result, err := toolDef.Handler(options)
+				if err != nil {
+					return nil, err
+				}
+
+				return mcp.NewToolResultText(result), nil
+			})
+		}
 	}
 }

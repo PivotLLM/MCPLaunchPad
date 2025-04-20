@@ -6,26 +6,25 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/PivotLLM/MCPLaunchPad/global"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/PivotLLM/MCPLaunchPad/gavin"
+	"github.com/PivotLLM/MCPLaunchPad/example1"
 	"github.com/PivotLLM/MCPLaunchPad/mcpserver"
 	"github.com/PivotLLM/MCPLaunchPad/mlogger"
 )
 
 // Version information
 const (
-	AppName    = "Generic-MCP"
-	AppVersion = "0.0.1"
+	AppName    = "MCPLaunchPad"
+	AppVersion = "0.0.2"
 )
 
 func main() {
 	var err error
 	var listen string
-
-	var APIBaseURL = "http://example.com"
 
 	// Define command line flags
 	debugFlag := flag.Bool("debug", true, "Enable debug mode")
@@ -76,11 +75,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a Gavin API instance with the configured BaseURL
-	gavinConfig := gavin.New(
-		gavin.WithBaseURL(APIBaseURL),
-		gavin.WithLogger(logger),
+	// Create the example1 API tool provider with a hard-coded base URL
+	tp1 := example1.New(
+		example1.WithBaseURL("https://api.example.com/"),
+		example1.WithLogger(logger),
 	)
+
+	// Create a slice (list) of tool providers
+	providers := []global.ToolProvider{
+		tp1,
+	}
 
 	// Create MCP server
 	mcp, err := mcpserver.New(
@@ -89,7 +93,7 @@ func main() {
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
 		mcpserver.WithVersion(AppVersion),
-		mcpserver.WithAPIClient(gavinConfig), // Pass gavinConfig as APIClient
+		mcpserver.WithToolProviders(providers),
 	)
 	if err != nil {
 		logger.Fatalf("Unable to create MCP server: %v", err)

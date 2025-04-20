@@ -19,17 +19,17 @@ type Option func(*MCPServer)
 
 // MCPServer represents the server instance.
 type MCPServer struct {
-	listen    string
-	srv       *server.MCPServer
-	sseServer *server.SSEServer
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-	logger    global.Logger
-	debug     bool
-	name      string
-	version   string
-	apiClient global.APIClient
+	listen        string
+	srv           *server.MCPServer
+	sseServer     *server.SSEServer
+	ctx           context.Context
+	cancel        context.CancelFunc
+	wg            sync.WaitGroup
+	logger        global.Logger
+	debug         bool
+	name          string
+	version       string
+	toolProviders []global.ToolProvider
 }
 
 func WithListen(listen string) Option {
@@ -62,9 +62,9 @@ func WithVersion(version string) Option {
 	}
 }
 
-func WithAPIClient(client global.APIClient) Option {
+func WithToolProviders(providers []global.ToolProvider) Option {
 	return func(s *MCPServer) {
-		s.apiClient = client
+		s.toolProviders = providers
 	}
 }
 

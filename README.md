@@ -1,6 +1,18 @@
 # MCPLaunchPad
 
-This project servers as an example and a shell for an MCP server. Tools can be added in mcpserver/tools.go
+This project servers as an example and a shell for creating an MCP server with a loosely coupled architecture that may need to be tweaked to fit your needs.
+
+An interface and handler signature is defined in global/interface.go. The mcpserver package will accept any service that implements this interface.
+
+The example1 and example2 packages implement the interface.
+
+Package example1 demonstrates tools that communicates with an API. It includes some helper functions and assumes that the body returned by the API is in a format such as JSON that is suitable for direct use by the MCP client. It also assumes that the API is trusted not to return anything harmful.
+
+Package example2 implements a simple tool that returns the time.
+
+By default, only example2 is enabled in main.go to provide an out-of-the-box working MCP server.
+
+The mcpserver package calls the Register() function of each package to get the information required to register the tools the package provides.
 
 **CAUTION: This server is intended for local use and currently does not authenticate incoming requests because a standard interoperable mechanism for MCP clients to authenticate to MCP servers does not exist. It is hard-coded to listen on the localhost interface. Do not change this unless you are confident that you fully understand the risks and consequences.**
 
