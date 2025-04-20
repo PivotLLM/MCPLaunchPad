@@ -27,7 +27,9 @@ func (c *Config) httpPost(path string, data map[string]any) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to make POST request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	// Check the status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

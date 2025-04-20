@@ -43,7 +43,9 @@ func (c *Config) httpDelete(path string, queryParams map[string]string) (string,
 	if err != nil {
 		return "", fmt.Errorf("failed to make DELETE request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	// Check the status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

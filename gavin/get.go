@@ -38,7 +38,9 @@ func (c *Config) httpGet(path string, queryParams map[string]string) (string, er
 	if err != nil {
 		return "", fmt.Errorf("failed to make GET request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("received non-OK HTTP status: %s", resp.Status)

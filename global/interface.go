@@ -20,5 +20,6 @@ type APIClient interface {
 	Register() []ToolDefinition
 }
 
-// Define a function type for the tool handler
+// APIHandler defines a function type for our tool handler. This avoids the API package
+// having to import definitions from the MCP server, etc.
 type APIHandler func(options map[string]any) (string, error)

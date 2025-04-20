@@ -4,7 +4,13 @@ import (
 	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
-// RegisterTools registers all tools from the gavin package with the MCP server.
+// Register provides the details of all available tools. This function is called by the
+// MCP server, and it registers each of them. This function is also called by helper functions in
+// this package to validate options and build query parameters. That should ensure that the
+// information provided to the LLM via the MCP server and the implementations remain consistent.
+// If you change the Name: fields here, you must also update them in the handlers
+// (users.go, tasks.go, projects.go, apiKeys.go) because the handlers pass the name field to
+// validation functions.
 func (c *Config) Register() []global.ToolDefinition {
 	return []global.ToolDefinition{
 		{
