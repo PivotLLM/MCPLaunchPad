@@ -13,7 +13,7 @@ import (
 func (c *Config) Register() []global.ToolDefinition {
 	return []global.ToolDefinition{
 		{
-			Name:        "get_widget",
+			Name:        "list_widgets",
 			Description: "Fetch a list of widgets with optional pagination. Use 'offset' and 'limit' for pagination.",
 			Parameters: []global.ToolParameter{
 				{
