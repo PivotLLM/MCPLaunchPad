@@ -175,11 +175,13 @@ func (m *MCPServer) Stop() error {
 	}
 }
 
+// WithRequestLogging is a middleware function that logs request details.
 func WithRequestLogging(logger global.Logger) server.ServerOption {
 	return server.WithToolHandlerMiddleware(func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
 			// Log the request details
-			logger.Debugf("Received request: %+v\n", request)
+			logger.Debugf("Request: %+v", request)
 
 			// Call the next handler in the chain
 			return next(ctx, request)

@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/PivotLLM/MCPLaunchPad/example2"
 	"github.com/PivotLLM/MCPLaunchPad/global"
 	"os"
 	"os/signal"
@@ -81,9 +82,15 @@ func main() {
 		example1.WithLogger(logger),
 	)
 
+	// Create the example2 time tool provider
+	tp2 := example2.New(
+		example2.WithLogger(logger),
+	)
+
 	// Create a slice (list) of tool providers
 	providers := []global.ToolProvider{
 		tp1,
+		tp2,
 	}
 
 	// Create MCP server
