@@ -6,14 +6,18 @@ package mcpserver
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/PivotLLM/MCPLaunchPad/global"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"sync"
-	"time"
 )
 
-// MCPServer wraps the mcp-go server and mantis transaction access.
+// Option defines a function type for configuring the MCPServer.
+type Option func(*MCPServer)
+
+// MCPServer represents the server instance.
 type MCPServer struct {
 	listen    string
 	srv       *server.MCPServer
@@ -25,9 +29,8 @@ type MCPServer struct {
 	debug     bool
 	name      string
 	version   string
+	apiClient global.APIClient
 }
-
-type Option func(*MCPServer)
 
 func WithListen(listen string) Option {
 	return func(m *MCPServer) {
@@ -59,10 +62,16 @@ func WithVersion(version string) Option {
 	}
 }
 
-// New creates a new MCPServer
+func WithAPIClient(client global.APIClient) Option {
+	return func(s *MCPServer) {
+		s.apiClient = client
+	}
+}
+
+// New creates a new MCPServer instance with the provided options.
 func New(options ...Option) (*MCPServer, error) {
 
-	// Create a new MCPServer instance
+	// Create a new MCPServer instance with default values
 	// This is a wrapper around the mcp-go server
 	m := &MCPServer{
 		listen:    "localhost:8080",

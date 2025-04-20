@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/PivotLLM/MCPLaunchPad/gavin"
 	"github.com/PivotLLM/MCPLaunchPad/mcpserver"
 	"github.com/PivotLLM/MCPLaunchPad/mlogger"
 )
@@ -23,6 +24,8 @@ const (
 func main() {
 	var err error
 	var listen string
+
+	var APIBaseURL = "http://example.com"
 
 	// Define command line flags
 	debugFlag := flag.Bool("debug", true, "Enable debug mode")
@@ -55,7 +58,6 @@ func main() {
 
 	// Use the flag values
 	debug := *debugFlag
-
 	if *portFlag > 0 && *portFlag < 65536 {
 		listen = fmt.Sprintf("localhost:%d", *portFlag)
 	} else {
@@ -74,6 +76,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create a Gavin API instance with the configured BaseURL
+	gavinConfig := gavin.New(
+		gavin.WithBaseURL(APIBaseURL),
+		gavin.WithLogger(logger),
+	)
+
 	// Create MCP server
 	mcp, err := mcpserver.New(
 		mcpserver.WithListen(listen),
@@ -81,6 +89,7 @@ func main() {
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
 		mcpserver.WithVersion(AppVersion),
+		mcpserver.WithAPIClient(gavinConfig), // Pass gavinConfig as APIClient
 	)
 	if err != nil {
 		logger.Fatalf("Unable to create MCP server: %v", err)
