@@ -6,28 +6,31 @@ package mcpserver
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/PivotLLM/MCPLaunchPad/global"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"sync"
-	"time"
 )
 
-// MCPServer wraps the mcp-go server and mantis transaction access.
-type MCPServer struct {
-	listen    string
-	srv       *server.MCPServer
-	sseServer *server.SSEServer
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-	logger    global.Logger
-	debug     bool
-	name      string
-	version   string
-}
-
+// Option defines a function type for configuring the MCPServer.
 type Option func(*MCPServer)
+
+// MCPServer represents the server instance.
+type MCPServer struct {
+	listen        string
+	srv           *server.MCPServer
+	sseServer     *server.SSEServer
+	ctx           context.Context
+	cancel        context.CancelFunc
+	wg            sync.WaitGroup
+	logger        global.Logger
+	debug         bool
+	name          string
+	version       string
+	toolProviders []global.ToolProvider
+}
 
 func WithListen(listen string) Option {
 	return func(m *MCPServer) {
@@ -59,10 +62,16 @@ func WithVersion(version string) Option {
 	}
 }
 
-// New creates a new MCPServer
+func WithToolProviders(providers []global.ToolProvider) Option {
+	return func(s *MCPServer) {
+		s.toolProviders = providers
+	}
+}
+
+// New creates a new MCPServer instance with the provided options.
 func New(options ...Option) (*MCPServer, error) {
 
-	// Create a new MCPServer instance
+	// Create a new MCPServer instance with default values
 	// This is a wrapper around the mcp-go server
 	m := &MCPServer{
 		listen:    "localhost:8080",
@@ -166,11 +175,13 @@ func (m *MCPServer) Stop() error {
 	}
 }
 
+// WithRequestLogging is a middleware function that logs request details.
 func WithRequestLogging(logger global.Logger) server.ServerOption {
 	return server.WithToolHandlerMiddleware(func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
 			// Log the request details
-			logger.Debugf("Received request: %+v\n", request)
+			logger.Debugf("Request: %+v", request)
 
 			// Call the next handler in the chain
 			return next(ctx, request)

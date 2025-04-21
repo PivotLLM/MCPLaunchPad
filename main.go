@@ -10,14 +10,19 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
+
+	"github.com/PivotLLM/MCPLaunchPad/example1"
+	"github.com/PivotLLM/MCPLaunchPad/example2"
+	"github.com/PivotLLM/MCPLaunchPad/global"
 	"github.com/PivotLLM/MCPLaunchPad/mcpserver"
 	"github.com/PivotLLM/MCPLaunchPad/mlogger"
 )
 
 // Version information
 const (
-	AppName    = "Generic-MCP"
-	AppVersion = "0.0.1"
+	AppName    = "MCPLaunchPad"
+	AppVersion = "0.0.2"
 )
 
 func main() {
@@ -55,7 +60,6 @@ func main() {
 
 	// Use the flag values
 	debug := *debugFlag
-
 	if *portFlag > 0 && *portFlag < 65536 {
 		listen = fmt.Sprintf("localhost:%d", *portFlag)
 	} else {
@@ -74,6 +78,52 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Get the user's home directory if possible
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		envFile := homeDir + string(os.PathSeparator) + ".mcp"
+		err = godotenv.Load(envFile)
+		if err == nil {
+			logger.Infof("Loaded environment variables from %s", envFile)
+		}
+	}
+
+	// Load BaseURL and auth key from environment variables`
+	APIBaseURL := os.Getenv("API_BASE_URL")
+	if APIBaseURL == "" {
+		logger.Fatalf("API_BASE_URL environment variable is not set")
+		os.Exit(1)
+	}
+	APIAuthKey := os.Getenv("API_AUTH_KEY")
+	if APIAuthKey == "" {
+		logger.Fatalf("API_AUTH_KEY environment variable is not set")
+		os.Exit(1)
+	}
+	APIAuthHeader := os.Getenv("API_AUTH_HEADER")
+	if APIAuthHeader == "" {
+		logger.Fatalf("API_AUTH_HEADER environment variable is not set")
+		os.Exit(1)
+	}
+
+	// Create the example1 API tool provider with a hard-coded base URL
+	tp1 := example1.New(
+		example1.WithBaseURL("https://api.example.com/"),
+		example1.WithLogger(logger),
+		example1.WithAuthHeader(APIAuthHeader),
+		example1.WithAuthKey(APIAuthKey),
+	)
+
+	// Create the example2 time tool provider
+	tp2 := example2.New(
+		example2.WithLogger(logger),
+	)
+
+	// Create a slice (list) of tool providers
+	providers := []global.ToolProvider{
+		tp1,
+		tp2,
+	}
+
 	// Create MCP server
 	mcp, err := mcpserver.New(
 		mcpserver.WithListen(listen),
@@ -81,6 +131,7 @@ func main() {
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
 		mcpserver.WithVersion(AppVersion),
+		mcpserver.WithToolProviders(providers),
 	)
 	if err != nil {
 		logger.Fatalf("Unable to create MCP server: %v", err)

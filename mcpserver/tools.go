@@ -5,57 +5,50 @@ package mcpserver
 
 import (
 	"context"
-	"fmt"
-	"strings"
-	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 func (m *MCPServer) AddTools() {
-	// Create a get_time tool
-	// This tool returns the current time in a specified format (12-hour or 24-hour)
-	setAllowTool := mcp.NewTool("get_time",
-		mcp.WithDescription("Get the current time. Optionally set 'time_format' to '12' for 12-hour format or '24' for 24-hour format."),
-		mcp.WithString("time_format",
-			mcp.Description("Time format (12 or 24)"),
-		),
-	)
 
-	// Register the "get_time" tool
-	m.srv.AddTool(setAllowTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Iterate over the tool providers and register their tools
+	for _, provider := range m.toolProviders {
 
-		// Log tool invocation
-		m.logger.Debugf("Tool 'get_time' invoked with arguments: %+v", req.Params.Arguments)
+		// Call the Register function of the provider to get tool definitions
+		toolDefinitions := provider.Register()
 
-		timeFormatInterface, ok := req.Params.Arguments["time_format"]
-		if !ok {
-			return nil, fmt.Errorf("missing 'time_format' argument")
+		// Iterate over the tool definitions and register each tool
+		for _, toolDef := range toolDefinitions {
+
+			// Combine description and parameters into a slice of options
+			toolOptions := []mcp.ToolOption{
+				mcp.WithDescription(toolDef.Description),
+			}
+			for _, param := range toolDef.Parameters {
+				toolOptions = append(toolOptions, mcp.WithString(param.Name, mcp.Description(param.Description)))
+			}
+
+			// Create the tool with all options
+			tool := mcp.NewTool(toolDef.Name, toolOptions...)
+
+			// Register the tool with the MCP server, creating a handler compatible with the MCP server
+			// that calls the tool's handler function with the provided options
+			m.srv.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
+				// Copy the MCP arguments to a map
+				options := make(map[string]any)
+				for key, value := range req.Params.Arguments {
+					options[key] = value
+				}
+
+				// Execute the tool's handler, passing the options
+				result, err := toolDef.Handler(options)
+				if err != nil {
+					return nil, err
+				}
+
+				return mcp.NewToolResultText(result), nil
+			})
 		}
-
-		// Convert the interface to a string
-		timeFormatStr, ok := timeFormatInterface.(string)
-		if !ok {
-			return nil, fmt.Errorf("'time_format' must be a string")
-		}
-
-		// Trim whitespace and check if it's empty
-		timeFormatStr = strings.TrimSpace(timeFormatStr)
-		if timeFormatStr == "" {
-			return nil, fmt.Errorf("'time_format' cannot be empty")
-		}
-
-		var formattedTime string
-		switch timeFormatStr {
-		case "12":
-			formattedTime = time.Now().Format("03:04:05 PM")
-		case "24":
-			formattedTime = time.Now().Format("15:04:05")
-		default:
-			return nil, fmt.Errorf("invalid 'time_format' value; must be '12' or '24'")
-		}
-
-		// Return the formatted time
-		return mcp.NewToolResultText(formattedTime), nil
-	})
+	}
 }
