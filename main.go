@@ -91,23 +91,26 @@ func main() {
 	// Load BaseURL and auth key from environment variables`
 	APIBaseURL := os.Getenv("API_BASE_URL")
 	if APIBaseURL == "" {
-		logger.Fatalf("API_BASE_URL environment variable is not set")
-		os.Exit(1)
+		//logger.Fatalf("API_BASE_URL environment variable is not set")
+		//os.Exit(1)
+		APIBaseURL = "https://api.example.com"
 	}
 	APIAuthKey := os.Getenv("API_AUTH_KEY")
 	if APIAuthKey == "" {
-		logger.Fatalf("API_AUTH_KEY environment variable is not set")
-		os.Exit(1)
+		//logger.Fatalf("API_AUTH_KEY environment variable is not set")
+		//os.Exit(1)
+		APIAuthKey = "1234567890"
 	}
 	APIAuthHeader := os.Getenv("API_AUTH_HEADER")
 	if APIAuthHeader == "" {
-		logger.Fatalf("API_AUTH_HEADER environment variable is not set")
-		os.Exit(1)
+		//logger.Fatalf("API_AUTH_HEADER environment variable is not set")
+		//os.Exit(1)
+		APIAuthHeader = "X-API-Key"
 	}
 
 	// Create the example1 API tool provider with a hard-coded base URL
 	tp1 := example1.New(
-		example1.WithBaseURL("https://api.example.com/"),
+		example1.WithBaseURL(APIBaseURL),
 		example1.WithLogger(logger),
 		example1.WithAuthHeader(APIAuthHeader),
 		example1.WithAuthKey(APIAuthKey),
