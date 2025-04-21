@@ -11,6 +11,7 @@ vendor/
 private/
 .idea
 .idea/*
+.vs
 .env
 *.log
 mcplaunchpad
