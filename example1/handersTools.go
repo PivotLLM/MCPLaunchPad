@@ -1,7 +1,7 @@
-package example1
-
 // Copyright (c) 2025 Tenebris Technologies Inc.
 // Please see LICENSE for details.
+
+package example1
 
 import "fmt"
 
@@ -10,7 +10,7 @@ import "fmt"
 // func (c *Config) <FunctionName>(options map[string]any) (string, error)
 //
 // The httpPost, httpGet, and httpDelete functions return (string, error) and
-// can therefore be passed directly to the MCP server.
+// can therefore be returned directly to the MCP server.
 //
 
 // CreateWidget creates a new widget

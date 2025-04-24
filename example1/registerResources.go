@@ -4,9 +4,6 @@
 package example1
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
@@ -27,28 +24,15 @@ func (c *Config) RegisterResources() []global.ResourceDefinition {
 	}
 }
 
-// ResourceHandler is a simple handler that returns a readme file
-func (c *Config) ResourceHandler(uri string, options map[string]any) (global.ResourceResponse, error) {
-
-	// Check if the URI is valid
-	if uri != "file:///home/readme.txt" {
-		return global.ResourceResponse{}, errors.New("invalid URI")
+// RegisterResourceTemplates will be called by the MCP server.
+func (c *Config) RegisterResourceTemplates() []global.ResourceTemplateDefinition {
+	return []global.ResourceTemplateDefinition{
+		{
+			Name:        "ABC Data",
+			Description: "ABC data provides all the information you need on the alphabet",
+			MIMEType:    "text/plain",
+			URITemplate: "abc:///info/{letter_or_number}",
+			Handler:     c.ResourceHandler,
+		},
 	}
-
-	// Build some content because this is an example
-	msg := "This is a simple readme file.\nIf it was a real file, it would hopefully have meaningful content.\nHave a great day!"
-
-	// If the client sent any options, add them
-	if len(options) > 0 {
-		msg += "\n\nI noticed some options:\n"
-		for k, y := range options {
-			msg += fmt.Sprintf("%s: %v\n", k, y)
-		}
-	}
-
-	// Return the readme content
-	return global.ResourceResponse{
-		URI:      uri,
-		MIMEType: "text/plain",
-		Content:  "This is a simple readme file.\nIf it was a real file, it would hopefully have meaningful content.\nHave a great day!"}, nil
 }

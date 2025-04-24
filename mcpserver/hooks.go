@@ -22,9 +22,17 @@ func (m *MCPServer) hookAfterListPrompts(ctx context.Context, id any, request *m
 func (m *MCPServer) hookAfterListResources(ctx context.Context, id any, request *mcp.ListResourcesRequest, result *mcp.ListResourcesResult) {
 	if m.debug {
 		m.logger.Debugf("%s: %v", request.Request.Method, result.Resources)
-		m.logInJSON(result.Resources)
 	} else {
 		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.Resources))
+	}
+}
+
+//goland:noinspection GoUnusedParameter
+func (m *MCPServer) hookAfterListResourceTemplates(ctx context.Context, id any, request *mcp.ListResourceTemplatesRequest, result *mcp.ListResourceTemplatesResult) {
+	if m.debug {
+		m.logger.Debugf("%s: %v", request.Request.Method, result.ResourceTemplates)
+	} else {
+		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.ResourceTemplates))
 	}
 }
 

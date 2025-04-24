@@ -44,9 +44,8 @@ func (m *MCPServer) AddTools() {
 				// Execute the tool's handler, passing the options
 				result, err := toolDef.Handler(options)
 				if err != nil {
-					return nil, err
+					return mcp.NewToolResultError(err.Error()), err
 				}
-
 				return mcp.NewToolResultText(result), nil
 			})
 		}

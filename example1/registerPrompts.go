@@ -4,8 +4,6 @@
 package example1
 
 import (
-	"fmt"
-
 	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
@@ -25,18 +23,4 @@ func (c *Config) RegisterPrompts() []global.PromptDefinition {
 		},
 	}
 
-}
-
-// GreetingPrompt is an example
-func (c *Config) GreetingPrompt(options map[string]any) (string, global.Messages, error) {
-	name, ok := options["name"].(string)
-	if !ok || name == "" {
-		name = "friend"
-	}
-	return "A friendly greeting", []global.Message{
-		{
-			Role:    "assistant",
-			Content: fmt.Sprintf("Hello, %s! How can I help you today?", name),
-		},
-	}, nil
 }

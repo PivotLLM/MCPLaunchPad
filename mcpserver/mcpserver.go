@@ -115,6 +115,7 @@ func New(options ...Option) (*MCPServer, error) {
 	hooks := &server.Hooks{}
 	hooks.AddAfterListPrompts(m.hookAfterListPrompts)
 	hooks.AddAfterListResources(m.hookAfterListResources)
+	hooks.AddAfterListResourceTemplates(m.hookAfterListResourceTemplates)
 	hooks.AddAfterListTools(m.hookAfterListTools)
 
 	// Create an MCP server using the mcp-go library
@@ -130,6 +131,7 @@ func New(options ...Option) (*MCPServer, error) {
 	// Tools are in a separate file for better organization
 	m.AddTools()
 	m.AddResources()
+	m.AddResourceTemplates()
 	m.AddPrompts()
 
 	// Return the MCPServer instance
