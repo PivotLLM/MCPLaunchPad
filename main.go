@@ -88,27 +88,27 @@ func main() {
 		}
 	}
 
-	// Load BaseURL and auth key from environment variables`
+	// Load BaseURL and auth key from environment variables
+	// Because this is an example, if the variables are not set we will fall back to hard-coded values
 	APIBaseURL := os.Getenv("API_BASE_URL")
 	if APIBaseURL == "" {
-		//logger.Fatalf("API_BASE_URL environment variable is not set")
-		//os.Exit(1)
 		APIBaseURL = "https://api.example.com"
-	}
-	APIAuthKey := os.Getenv("API_AUTH_KEY")
-	if APIAuthKey == "" {
-		//logger.Fatalf("API_AUTH_KEY environment variable is not set")
-		//os.Exit(1)
-		APIAuthKey = "1234567890"
-	}
-	APIAuthHeader := os.Getenv("API_AUTH_HEADER")
-	if APIAuthHeader == "" {
-		//logger.Fatalf("API_AUTH_HEADER environment variable is not set")
-		//os.Exit(1)
-		APIAuthHeader = "X-API-Key"
+		logger.Warningf("API_BASE_URL environment variable is not set, defaulting to %s", APIBaseURL)
 	}
 
-	// Create the example1 API tool provider with a hard-coded base URL
+	APIAuthHeader := os.Getenv("API_AUTH_HEADER")
+	if APIAuthHeader == "" {
+		APIAuthHeader = "X-API-Key"
+		logger.Warningf("API_AUTH_HEADER environment variable is not set, defaulting to %s", APIAuthHeader)
+	}
+
+	APIAuthKey := os.Getenv("API_AUTH_KEY")
+	if APIAuthKey == "" {
+		APIAuthKey = "1234567890ABCDEFGHIJKLMONPQRSTUVWXYZ"
+		logger.Warningf("API_AUTH_KEY environment variable is not set, defaulting to %s", APIAuthKey)
+	}
+
+	// Create the example1 provider
 	tp1 := example1.New(
 		example1.WithBaseURL(APIBaseURL),
 		example1.WithLogger(logger),
@@ -116,7 +116,7 @@ func main() {
 		example1.WithAuthKey(APIAuthKey),
 	)
 
-	// Create the example2 time tool provider
+	// Create the example2 provider
 	tp2 := example2.New(
 		example2.WithLogger(logger),
 	)
@@ -127,14 +127,21 @@ func main() {
 		tp2,
 	}
 
-	// Create MCP server
+	// Create MCP server, passing in the logger and tool providers
+	// as well as setting other options
 	mcp, err := mcpserver.New(
 		mcpserver.WithListen(listen),
 		mcpserver.WithDebug(debug),
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
 		mcpserver.WithVersion(AppVersion),
+
+		// Pass in the tool providers
 		mcpserver.WithToolProviders(providers),
+
+		// Example1 also provides resources and prompts
+		mcpserver.WithResourceProviders([]global.ResourceProvider{tp1}),
+		mcpserver.WithPromptProviders([]global.PromptProvider{tp1}),
 	)
 	if err != nil {
 		logger.Fatalf("Unable to create MCP server: %v", err)

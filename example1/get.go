@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
 package example1
 
 import (
@@ -70,7 +73,7 @@ func (c *Config) validateURLParams(toolName string, options map[string]any) (map
 
 	// Find the tool definition from the registration
 	var toolDef *global.ToolDefinition
-	for _, def := range c.Register() {
+	for _, def := range c.RegisterTools() {
 		if def.Name == toolName {
 			toolDef = &def
 			break

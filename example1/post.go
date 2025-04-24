@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
 package example1
 
 import (
@@ -63,7 +66,7 @@ func (c *Config) httpPost(path string, data map[string]any) (string, error) {
 func (c *Config) validatePostParams(toolName string, options map[string]any) (map[string]any, error) {
 	// Find the tool definition from the registration
 	var toolDef *global.ToolDefinition
-	for _, def := range c.Register() {
+	for _, def := range c.RegisterTools() {
 		if def.Name == toolName {
 			toolDef = &def
 			break

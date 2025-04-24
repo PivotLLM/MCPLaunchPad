@@ -1,5 +1,8 @@
 package example1
 
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
 import "fmt"
 
 //
