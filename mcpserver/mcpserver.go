@@ -9,9 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PivotLLM/MCPLaunchPad/global"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
 // Option defines a function type for configuring the MCPServer.
@@ -19,17 +20,19 @@ type Option func(*MCPServer)
 
 // MCPServer represents the server instance.
 type MCPServer struct {
-	listen        string
-	srv           *server.MCPServer
-	sseServer     *server.SSEServer
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
-	logger        global.Logger
-	debug         bool
-	name          string
-	version       string
-	toolProviders []global.ToolProvider
+	listen            string
+	srv               *server.MCPServer
+	sseServer         *server.SSEServer
+	ctx               context.Context
+	cancel            context.CancelFunc
+	wg                sync.WaitGroup
+	logger            global.Logger
+	debug             bool
+	name              string
+	version           string
+	toolProviders     []global.ToolProvider
+	resourceProviders []global.ResourceProvider
+	promptProviders   []global.PromptProvider
 }
 
 func WithListen(listen string) Option {
@@ -68,6 +71,18 @@ func WithToolProviders(providers []global.ToolProvider) Option {
 	}
 }
 
+func WithResourceProviders(providers []global.ResourceProvider) Option {
+	return func(s *MCPServer) {
+		s.resourceProviders = providers
+	}
+}
+
+func WithPromptProviders(providers []global.PromptProvider) Option {
+	return func(s *MCPServer) {
+		s.promptProviders = providers
+	}
+}
+
 // New creates a new MCPServer instance with the provided options.
 func New(options ...Option) (*MCPServer, error) {
 
@@ -96,17 +111,28 @@ func New(options ...Option) (*MCPServer, error) {
 		return nil, fmt.Errorf("logger not set")
 	}
 
+	// Create hooks
+	hooks := &server.Hooks{}
+	hooks.AddAfterListPrompts(m.hookAfterListPrompts)
+	hooks.AddAfterListResources(m.hookAfterListResources)
+	hooks.AddAfterListResourceTemplates(m.hookAfterListResourceTemplates)
+	hooks.AddAfterListTools(m.hookAfterListTools)
+
 	// Create an MCP server using the mcp-go library
 	m.srv = server.NewMCPServer(
 		m.name,
 		m.version,
 		server.WithLogging(),
 		server.WithRecovery(),
+		server.WithHooks(hooks),
 		WithRequestLogging(m.logger), // Our custom request logging middleware
 	)
 
 	// Tools are in a separate file for better organization
 	m.AddTools()
+	m.AddResources()
+	m.AddResourceTemplates()
+	m.AddPrompts()
 
 	// Return the MCPServer instance
 	return m, nil

@@ -1,11 +1,15 @@
-// Package example2 implements a simple tool that returns the time
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
+// Package example2 provides a simple time service to an MCP client
 package example2
 
 import (
 	"fmt"
-	"github.com/PivotLLM/MCPLaunchPad/global"
 	"strings"
 	"time"
+
+	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
 // Ensure Config implements the global.ToolProvider interface.
@@ -35,13 +39,13 @@ func New(options ...Option) *Config {
 	return config
 }
 
-// Register will be called by the MCP server to obtain information and register the tools
-func (c *Config) Register() []global.ToolDefinition {
+// RegisterTools will be called by the MCP server to obtain information and register the tools
+func (c *Config) RegisterTools() []global.ToolDefinition {
 	return []global.ToolDefinition{
 		{
 			Name:        "get_time",
 			Description: "Get the current time. Optionally set 'time_format' to '12' for 12-hour format or '24' for 24-hour format.",
-			Parameters: []global.ToolParameter{
+			Parameters: []global.Parameter{
 				{
 					Name:        "time_format",
 					Description: "Time format (12 or 24).",

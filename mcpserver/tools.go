@@ -11,11 +11,11 @@ import (
 
 func (m *MCPServer) AddTools() {
 
-	// Iterate over the tool providers and register their tools
+	// Iterate over tool providers and register their tools
 	for _, provider := range m.toolProviders {
 
 		// Call the Register function of the provider to get tool definitions
-		toolDefinitions := provider.Register()
+		toolDefinitions := provider.RegisterTools()
 
 		// Iterate over the tool definitions and register each tool
 		for _, toolDef := range toolDefinitions {
@@ -32,7 +32,7 @@ func (m *MCPServer) AddTools() {
 			tool := mcp.NewTool(toolDef.Name, toolOptions...)
 
 			// Register the tool with the MCP server, creating a handler compatible with the MCP server
-			// that calls the tool's handler function with the provided options
+			// that wraps the tool's handler function with the provided options
 			m.srv.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 
 				// Copy the MCP arguments to a map
@@ -44,9 +44,8 @@ func (m *MCPServer) AddTools() {
 				// Execute the tool's handler, passing the options
 				result, err := toolDef.Handler(options)
 				if err != nil {
-					return nil, err
+					return mcp.NewToolResultError(err.Error()), err
 				}
-
 				return mcp.NewToolResultText(result), nil
 			})
 		}

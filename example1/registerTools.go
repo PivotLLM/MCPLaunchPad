@@ -1,21 +1,24 @@
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
 package example1
 
 import (
 	"github.com/PivotLLM/MCPLaunchPad/global"
 )
 
-// Register provides the details of all available tools. This function is called by the
+// RegisterTools provides the details of all available tools. This function is called by the
 // MCP server, and it registers each of them. This function is also called by helper functions in
 // this package to validate options and build query parameters. That should ensure that the
 // information provided to the LLM via the MCP server and the implementations remain consistent.
 // If you change the Name: fields here, you must also update them in handlers.go because
 // handers pass the name field to validation functions.
-func (c *Config) Register() []global.ToolDefinition {
+func (c *Config) RegisterTools() []global.ToolDefinition {
 	return []global.ToolDefinition{
 		{
 			Name:        "list_widgets",
 			Description: "Fetch a list of widgets with optional pagination. Use 'offset' and 'limit' for pagination.",
-			Parameters: []global.ToolParameter{
+			Parameters: []global.Parameter{
 				{
 					Name:        "offset",
 					Description: "Starting record offset.",
@@ -32,7 +35,7 @@ func (c *Config) Register() []global.ToolDefinition {
 		{
 			Name:        "create_widget",
 			Description: "Create a new widget with a name and description, and an optional radius.",
-			Parameters: []global.ToolParameter{
+			Parameters: []global.Parameter{
 				{
 					Name:        "name",
 					Description: "The name of the widget.",
@@ -54,7 +57,7 @@ func (c *Config) Register() []global.ToolDefinition {
 		{
 			Name:        "get_widget",
 			Description: "Get details of a specific widget by id.",
-			Parameters: []global.ToolParameter{
+			Parameters: []global.Parameter{
 				{
 					Name:        "id",
 					Description: "The ID of the widget to get.",
@@ -66,7 +69,7 @@ func (c *Config) Register() []global.ToolDefinition {
 		{
 			Name:        "delete_widget",
 			Description: "Delete a widget by id.",
-			Parameters: []global.ToolParameter{
+			Parameters: []global.Parameter{
 				{
 					Name:        "id",
 					Description: "The ID of the widget to delete.",

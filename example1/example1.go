@@ -1,4 +1,7 @@
-// Package example1 demonstrates interacting with APIs
+// Copyright (c) 2025 Tenebris Technologies Inc.
+// Please see LICENSE for details.
+
+// Package example1 demonstrates providing APIs as tools for an MCP client
 package example1
 
 import (
