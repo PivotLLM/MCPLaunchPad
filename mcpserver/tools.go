@@ -36,10 +36,7 @@ func (m *MCPServer) AddTools() {
 			m.srv.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 
 				// Copy the MCP arguments to a map
-				options := make(map[string]any)
-				for key, value := range req.Params.Arguments {
-					options[key] = value
-				}
+				options := req.GetArguments()
 
 				// Execute the tool's handler, passing the options
 				result, err := toolDef.Handler(options)

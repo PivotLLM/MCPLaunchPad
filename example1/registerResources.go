@@ -15,7 +15,7 @@ import (
 func (c *Config) RegisterResources() []global.ResourceDefinition {
 	return []global.ResourceDefinition{
 		{
-			Name:        "readme.txt",
+			Name:        "readme",
 			Description: "A readme file",
 			MIMEType:    "text/plain",
 			URI:         "file:///home/readme.txt",

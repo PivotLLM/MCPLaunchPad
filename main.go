@@ -32,6 +32,7 @@ func main() {
 	// Define command line flags
 	debugFlag := flag.Bool("debug", true, "Enable debug mode")
 	portFlag := flag.Int("port", 8888, "Port to listen on")
+	noStreamingFlag := flag.Bool("no-streaming", false, "Disable streaming (use plain HTTP instead of SSE)")
 	helpFlag := flag.Bool("help", false, "Show help information")
 	versionFlag := flag.Bool("version", false, "Show version information")
 
@@ -60,6 +61,7 @@ func main() {
 
 	// Use the flag values
 	debug := *debugFlag
+	noStreaming := *noStreamingFlag
 	if *portFlag > 0 && *portFlag < 65536 {
 		listen = fmt.Sprintf("localhost:%d", *portFlag)
 	} else {
@@ -135,6 +137,7 @@ func main() {
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName(AppName),
 		mcpserver.WithVersion(AppVersion),
+		mcpserver.WithNoStreaming(noStreaming),
 
 		// Pass in the tool providers
 		mcpserver.WithToolProviders(providers),

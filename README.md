@@ -16,6 +16,13 @@ The mcpserver package calls the Register() function of each package to get the i
 
 **CAUTION: This server is intended for local use and currently does not authenticate incoming requests because a standard interoperable mechanism for MCP clients to authenticate to MCP servers does not exist. It is hard-coded to listen on the localhost interface. Do not change this unless you are confident that you fully understand the risks and consequences.**
 
+## Transport Modes
+
+The server supports two transport modes:
+
+- **SSE Mode (default)**: Uses Server-Sent Events for real-time streaming communication. This is the default mode and provides the best experience for interactive MCP clients.
+- **HTTP Mode**: Uses plain HTTP requests and responses without streaming. This mode can be enabled with the `-no-streaming` flag and is useful for clients that don't support SSE or when you prefer traditional request-response patterns.
+
 ## Getting Started
 
 ### Prerequisites
@@ -36,8 +43,14 @@ go build -o mcplaunchpad
 ### Use
 
 ```bash
-# Run the server with default settings
+# Run the server with default settings (SSE streaming mode)
 ./mcplaunchpad
+
+# Run the server in plain HTTP mode (no streaming)
+./mcplaunchpad -no-streaming
+
+# Run on a different port
+./mcplaunchpad -port 9000
 
 # For other options, see help
 ./mcplaunchpad -h

@@ -32,9 +32,9 @@ func (m *MCPServer) AddResources() {
 				func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 
 					// Copy the MCP arguments to a map
-					options := make(map[string]any)
-					for key, value := range request.Params.Arguments {
-						options[key] = value
+					options := request.Params.Arguments
+					if options == nil {
+						options = make(map[string]any)
 					}
 
 					// Execute the tool's handler, passing the options
@@ -75,9 +75,9 @@ func (m *MCPServer) AddResourceTemplates() {
 			m.srv.AddResourceTemplate(template,
 				func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 					// Copy the MCP arguments to a map
-					options := make(map[string]any)
-					for key, value := range request.Params.Arguments {
-						options[key] = value
+					options := request.Params.Arguments
+					if options == nil {
+						options = make(map[string]any)
 					}
 
 					// Execute the tool's handler, passing the options

@@ -18,11 +18,19 @@ import (
 // Option defines a function type for configuring the MCPServer.
 type Option func(*MCPServer)
 
+// MCPServerTransport is an interface that abstracts the different transport types
+type MCPServerTransport interface {
+	Start(addr string) error
+	Shutdown(ctx context.Context) error
+}
+
 // MCPServer represents the server instance.
 type MCPServer struct {
 	listen            string
 	srv               *server.MCPServer
 	sseServer         *server.SSEServer
+	httpServer        *server.StreamableHTTPServer
+	transport         MCPServerTransport
 	ctx               context.Context
 	cancel            context.CancelFunc
 	wg                sync.WaitGroup
@@ -30,6 +38,7 @@ type MCPServer struct {
 	debug             bool
 	name              string
 	version           string
+	noStreaming       bool
 	toolProviders     []global.ToolProvider
 	resourceProviders []global.ResourceProvider
 	promptProviders   []global.PromptProvider
@@ -83,22 +92,31 @@ func WithPromptProviders(providers []global.PromptProvider) Option {
 	}
 }
 
+func WithNoStreaming(noStreaming bool) Option {
+	return func(m *MCPServer) {
+		m.noStreaming = noStreaming
+	}
+}
+
 // New creates a new MCPServer instance with the provided options.
 func New(options ...Option) (*MCPServer, error) {
 
 	// Create a new MCPServer instance with default values
 	// This is a wrapper around the mcp-go server
 	m := &MCPServer{
-		listen:    "localhost:8080",
-		srv:       nil,
-		sseServer: nil,
-		ctx:       nil,
-		cancel:    nil,
-		logger:    nil,
-		debug:     false,
-		name:      "Generic-MCP",
-		version:   "0.0.1",
-		wg:        sync.WaitGroup{},
+		listen:      "localhost:8080",
+		srv:         nil,
+		sseServer:   nil,
+		httpServer:  nil,
+		transport:   nil,
+		ctx:         nil,
+		cancel:      nil,
+		logger:      nil,
+		debug:       false,
+		name:        "Generic-MCP",
+		version:     "0.0.1",
+		noStreaming: false,
+		wg:          sync.WaitGroup{},
 	}
 
 	// Apply options
@@ -149,13 +167,25 @@ func (m *MCPServer) Start() error {
 		defer m.wg.Done()
 
 		// Log the start
-		m.logger.Infof("MCP server listening on TCP port %s", m.listen)
+		if m.noStreaming {
+			m.logger.Infof("MCP server listening on TCP port %s (HTTP mode)", m.listen)
+		} else {
+			m.logger.Infof("MCP server listening on TCP port %s (SSE mode)", m.listen)
+		}
 
-		// Create SSE server
-		m.sseServer = server.NewSSEServer(m.srv)
+		// Create the appropriate server based on streaming preference
+		if m.noStreaming {
+			// Create HTTP server for non-streaming mode
+			m.httpServer = server.NewStreamableHTTPServer(m.srv)
+			m.transport = m.httpServer
+		} else {
+			// Create SSE server for streaming mode (default)
+			m.sseServer = server.NewSSEServer(m.srv)
+			m.transport = m.sseServer
+		}
 
-		// Start the SSE server
-		err := m.sseServer.Start(m.listen)
+		// Start the server
+		err := m.transport.Start(m.listen)
 		// We don't need to log anything here - if the server is shutting down,
 		// this is expected behavior and not an error condition
 		_ = err
@@ -171,7 +201,7 @@ func (m *MCPServer) Stop() error {
 		m.cancel()
 	}
 
-	if m.sseServer != nil {
+	if m.transport != nil {
 		// Attempt graceful shutdown with a timeout
 		// Use a shorter timeout to avoid the context deadline exceeded error
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -179,7 +209,7 @@ func (m *MCPServer) Stop() error {
 
 		// Shutdown the server and ignore all errors during shutdown
 		// This prevents both the ErrServerClosed and context deadline exceeded errors
-		_ = m.sseServer.Shutdown(ctx)
+		_ = m.transport.Shutdown(ctx)
 	}
 
 	// Wait for the server goroutine to exit with a timeout
