@@ -26,7 +26,11 @@ func (m *MCPServer) AddPrompts() {
 			}
 
 			for _, param := range prompt.Parameters {
-				options = append(options, mcp.WithArgument(param.Name, mcp.ArgumentDescription(param.Description)))
+				argOptions := []mcp.ArgumentOption{mcp.ArgumentDescription(param.Description)}
+				if param.Required {
+					argOptions = append(argOptions, mcp.RequiredArgument())
+				}
+				options = append(options, mcp.WithArgument(param.Name, argOptions...))
 			}
 
 			// Create the tool with all options

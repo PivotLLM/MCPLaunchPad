@@ -24,8 +24,13 @@ func (m *MCPServer) AddTools() {
 			toolOptions := []mcp.ToolOption{
 				mcp.WithDescription(toolDef.Description),
 			}
+
 			for _, param := range toolDef.Parameters {
-				toolOptions = append(toolOptions, mcp.WithString(param.Name, mcp.Description(param.Description)))
+				options := []mcp.PropertyOption{mcp.Description(param.Description)}
+				if param.Required {
+					options = append(options, mcp.Required())
+				}
+				toolOptions = append(toolOptions, mcp.WithString(param.Name, options...))
 			}
 
 			// Create the tool with all options
