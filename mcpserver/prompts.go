@@ -11,15 +11,16 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// AddPrompts registers all prompts from prompt providers
 func (m *MCPServer) AddPrompts() {
 
 	// Iterate over prompt providers and register their prompts
 	for _, provider := range m.promptProviders {
 
-		// Call the Register function of the provider to get tool definitions
+		// Call the Register function of the provider to get prompt definitions
 		promptDefinitions := provider.RegisterPrompts()
 
-		// Iterate over the tool definitions and register each tool
+		// Iterate over the prompt definitions and register each prompt
 		for _, prompt := range promptDefinitions {
 
 			// Combine description and parameters into a slice of options
@@ -27,6 +28,7 @@ func (m *MCPServer) AddPrompts() {
 				mcp.WithPromptDescription(prompt.Description),
 			}
 
+			// Add parameters
 			for _, param := range prompt.Parameters {
 				argOptions := []mcp.ArgumentOption{mcp.ArgumentDescription(param.Description)}
 				if param.Required {
@@ -35,21 +37,20 @@ func (m *MCPServer) AddPrompts() {
 				options = append(options, mcp.WithArgument(param.Name, argOptions...))
 			}
 
-			// Create the tool with all options
+			// Create the prompt with all options
 			newPrompt := mcp.NewPrompt(prompt.Name, options...)
 
-			// Register the tool with the MCP server, creating a handler compatible with the MCP server
-			// that wraps the tool's handler function with the provided options
+			// Register the prompt with the MCP server
 			m.srv.AddPrompt(newPrompt, func(ctx context.Context, req mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 
 				// Copy the MCP arguments to a map
-				options := make(map[string]any)
+				args := make(map[string]any)
 				for key, value := range req.Params.Arguments {
-					options[key] = value
+					args[key] = value
 				}
 
-				// Execute the tool's handler, passing the options
-				str, messages, err := prompt.Handler(options)
+				// Execute the prompt handler, passing the options
+				str, messages, err := prompt.Handler(args)
 				if err != nil {
 					return nil, err
 				}

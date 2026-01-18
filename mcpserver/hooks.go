@@ -16,7 +16,7 @@ func (m *MCPServer) hookAfterListPrompts(ctx context.Context, id any, request *m
 	if m.debug {
 		m.logger.Debugf("%s: %v", request.Request.Method, result.Prompts)
 	} else {
-		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.Prompts))
+		m.logger.Infof("%s: %d items returned", request.Request.Method, len(result.Prompts))
 	}
 }
 
@@ -25,7 +25,7 @@ func (m *MCPServer) hookAfterListResources(ctx context.Context, id any, request 
 	if m.debug {
 		m.logger.Debugf("%s: %v", request.Request.Method, result.Resources)
 	} else {
-		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.Resources))
+		m.logger.Infof("%s: %d items returned", request.Request.Method, len(result.Resources))
 	}
 }
 
@@ -34,7 +34,7 @@ func (m *MCPServer) hookAfterListResourceTemplates(ctx context.Context, id any, 
 	if m.debug {
 		m.logger.Debugf("%s: %v", request.Request.Method, result.ResourceTemplates)
 	} else {
-		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.ResourceTemplates))
+		m.logger.Infof("%s: %d items returned", request.Request.Method, len(result.ResourceTemplates))
 	}
 }
 
@@ -43,6 +43,6 @@ func (m *MCPServer) hookAfterListTools(ctx context.Context, id any, request *mcp
 	if m.debug {
 		m.logger.Debugf("%s: %v", request.Request.Method, result.Tools)
 	} else {
-		m.logger.Infof("%s: %s items returned", request.Request.Method, len(result.Tools))
+		m.logger.Infof("%s: %d items returned", request.Request.Method, len(result.Tools))
 	}
 }

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PivotLLM/MCPLaunchPad/global"
+	"github.com/PivotLLM/MCPLaunchPad/mcptypes"
 )
 
 type MLogger struct {
@@ -27,14 +27,14 @@ type MLogger struct {
 	dateFormat string
 }
 
-// This package implements interfaces.Logger
-var _ global.Logger = (*MLogger)(nil)
+// This package implements mcptypes.Logger
+var _ mcptypes.Logger = (*MLogger)(nil)
 
 // Option is a function that configures a MLogger
 type Option func(*MLogger) error
 
 // New creates a new instance of MLogger with the provided options
-func New(options ...Option) (global.Logger, error) {
+func New(options ...Option) (mcptypes.Logger, error) {
 	m := &MLogger{
 		logLevel:   true,
 		dateFormat: "2006-01-02 15:04:05",

@@ -1,67 +1,249 @@
 # MCPLaunchPad
 
-This project servers as an example and a shell for creating an MCP server with a loosely coupled architecture that may need to be tweaked to fit your needs.
+A production-ready Go library for building MCP (Model Context Protocol) servers with a clean, extensible architecture.
 
-An interface and handler signature is defined in global/interface.go. The mcpserver package will accept any service that implements this interface.
+## Features
 
-The example1 and example2 packages implement the interface.
+- **Multiple Transport Modes**: stdio, SSE, or HTTP (one mode per server instance)
+- **Full MCP Hint System**: Complete support for ReadOnly, Destructive, Idempotent, and OpenWorld hints
+- **Rich Parameter Types**: Full JSON Schema validation with easy-to-use helper constructors
+- **Provider Pattern**: Clean separation of concerns via interfaces
+- **Three-Level Hint Configuration**: Package defaults → server-wide config → tool-level overrides
+- **Flexible Logging**: Optional logger with silent no-op fallback
+- **Zero Dependencies on Project Code**: Reusable across your projects
 
-Package example1 demonstrates tools that communicates with an API. It includes some helper functions and assumes that the body returned by the API is in a format such as JSON that is suitable for direct use by the MCP client. It also assumes that the API is trusted not to return anything harmful.
-
-Package example2 implements a simple tool that returns the time.
-
-Note that the URL specified in main.go (api.example.com) does not exist, so every request provided by example1 will fail. Asking the LLM to get the time in 12 or 24-hour format (provided by example2) will work.
-
-The mcpserver package calls the Register() function of each package to get the information required to register the tools the package provides.
-
-**CAUTION: This server is intended for local use and currently does not authenticate incoming requests because a standard interoperable mechanism for MCP clients to authenticate to MCP servers does not exist. It is hard-coded to listen on the localhost interface. Do not change this unless you are confident that you fully understand the risks and consequences.**
-
-## Transport Modes
-
-The server supports two transport modes:
-
-- **SSE Mode (default)**: Uses Server-Sent Events for real-time streaming communication. This is the default mode and provides the best experience for interactive MCP clients.
-- **HTTP Mode**: Uses plain HTTP requests and responses without streaming. This mode can be enabled with the `-no-streaming` flag and is useful for clients that don't support SSE or when you prefer traditional request-response patterns.
-
-## Getting Started
-
-### Prerequisites
-
-- Go 1.24 or later
+## Quick Start
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/PivotLLM/MCPLaunchPad.git
-cd MCPLaunchPad
-
-# Build the project
-go build -o mcplaunchpad
+go get github.com/PivotLLM/MCPLaunchPad
 ```
 
-### Use
+### Basic Stdio Server
+
+```go
+package main
+
+import (
+    "github.com/PivotLLM/MCPLaunchPad/mcpserver"
+    "github.com/PivotLLM/MCPLaunchPad/mcptypes"
+    "github.com/PivotLLM/MCPLaunchPad/mlogger"
+)
+
+// Implement ToolProvider interface
+type MyProvider struct{}
+
+func (m *MyProvider) RegisterTools() []mcptypes.ToolDefinition {
+    return []mcptypes.ToolDefinition{
+        {
+            Name:        "greet",
+            Description: "Say hello",
+            Parameters: []*mcptypes.Parameter{
+                mcptypes.StringParam("name", "Name to greet", true),
+            },
+            Handler: func(opts map[string]any) (string, error) {
+                name := opts["name"].(string)
+                return "Hello, " + name + "!", nil
+            },
+            Hints: mcptypes.NewHints().ReadOnly(true),
+        },
+    }
+}
+
+func main() {
+    logger, _ := mlogger.New(mlogger.WithLogStdout(true))
+    defer logger.Close()
+
+    srv, _ := mcpserver.New(
+        mcpserver.WithTransportStdio(),
+        mcpserver.WithLogger(logger),
+        mcpserver.WithName("MyMCP"),
+        mcpserver.WithVersion("1.0.0"),
+        mcpserver.WithToolProviders([]mcptypes.ToolProvider{&MyProvider{}}),
+    )
+
+    srv.Start() // Blocks until EOF in stdio mode
+}
+```
+
+## Architecture
+
+### Core Packages
+
+- **mcptypes/** - Shared interfaces and types (Logger, ToolProvider, ResourceProvider, PromptProvider, Parameter, ToolHints)
+- **mcpserver/** - MCP server implementation with transport abstraction
+- **mlogger/** - Simple file-based logger implementing mcptypes.Logger
+
+### Provider Interfaces
+
+```go
+type ToolProvider interface {
+    RegisterTools() []ToolDefinition
+}
+
+type ResourceProvider interface {
+    RegisterResources() []ResourceDefinition
+    RegisterResourceTemplates() []ResourceTemplateDefinition
+}
+
+type PromptProvider interface {
+    RegisterPrompts() []PromptDefinition
+}
+```
+
+## Transport Modes
+
+### Stdio (for Claude Desktop, etc.)
+
+```go
+mcpserver.WithTransportStdio()
+```
+
+Communicates via stdin/stdout. `Start()` blocks until EOF. Use for Claude Desktop integration.
+
+### SSE (Server-Sent Events)
+
+```go
+mcpserver.WithTransportSSE("localhost:8080")
+```
+
+HTTP server with streaming. `Start()` runs in background, `Stop()` for graceful shutdown.
+
+### HTTP (Non-Streaming)
+
+```go
+mcpserver.WithTransportHTTP("localhost:8080")
+```
+
+Plain HTTP server. `Start()` runs in background, `Stop()` for graceful shutdown.
+
+## Hint System
+
+MCP supports four tool hints:
+
+- **ReadOnlyHint**: Tool only reads data
+- **DestructiveHint**: Tool may modify/delete data
+- **IdempotentHint**: Repeated calls have no additional effect
+- **OpenWorldHint**: Tool interacts with external entities
+
+### Three-Level Configuration
+
+**Level 1: Package Defaults**
+```go
+// Hardcoded in mcpserver package
+ReadOnly: false, Destructive: false, Idempotent: false, OpenWorld: false
+```
+
+**Level 2: Server-Wide Overrides**
+```go
+mcpserver.New(
+    mcpserver.WithDefaultReadOnlyHint(true),
+    mcpserver.WithDefaultDestructiveHint(false),
+    // ... affects all tools unless overridden
+)
+```
+
+**Level 3: Tool-Level Overrides**
+```go
+// Method chaining
+hints := mcptypes.NewHints().ReadOnly(true).OpenWorld(false)
+
+// Or variadic constructor
+hints := mcptypes.NewHints(
+    mcptypes.ReadOnly(true),
+    mcptypes.OpenWorld(false),
+)
+
+// In tool definition
+ToolDefinition{
+    Hints: hints,  // Overrides server-wide and package defaults
+}
+```
+
+## Parameter Helpers
+
+### Simple Types
+
+```go
+params := []*mcptypes.Parameter{
+    mcptypes.StringParam("name", "User name", true),
+    mcptypes.NumberParam("age", "User age", false),
+    mcptypes.IntegerParam("count", "Item count", true),
+    mcptypes.BoolParam("active", "Is active", false),
+}
+```
+
+### With Validation
+
+```go
+mcptypes.StringParam("email", "Email address", true).
+    WithPattern(`^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$`)
+
+mcptypes.NumberParam("port", "Port number", true).
+    WithMinimum(1).
+    WithMaximum(65535)
+
+mcptypes.StringParam("status", "Status", true).
+    WithEnum("pending", "active", "closed")
+```
+
+### Complex Types
+
+```go
+mcptypes.ArrayParam("tags", "Tags", false,
+    mcptypes.StringParam("tag", "Tag", false))
+
+mcptypes.ObjectParam("config", "Configuration", true,
+    map[string]*mcptypes.Parameter{
+        "host": mcptypes.StringParam("host", "Hostname", true),
+        "port": mcptypes.IntegerParam("port", "Port", true),
+    })
+```
+
+## Examples
+
+See the `examples/` directory:
+
+- **examples/basic/** - Minimal stdio server with single tool
+
+## Documentation
+
+- [mcpserver Package README](mcpserver/README.md) - Detailed API documentation
+- [REFACTOR_DESIGN.md](REFACTOR_DESIGN.md) - Architecture and design decisions
+- [CLAUDE.md](CLAUDE.md) - Development guide for AI assistants
+
+## Prerequisites
+
+- Go 1.24 or later
+
+## Testing
 
 ```bash
-# Run the server with default settings (SSE streaming mode)
-./mcplaunchpad
+# Build example
+cd examples/basic
+go build
 
-# Run the server in plain HTTP mode (no streaming)
-./mcplaunchpad -no-streaming
-
-# Run on a different port
-./mcplaunchpad -port 9000
-
-# For other options, see help
-./mcplaunchpad -h
+# Test with probe tool
+probe -stdio ./basic -list-only
+probe -stdio ./basic -call greet -params '{"name":"World"}'
 ```
 
-## Copyright and license
+## Security Note
 
-Copyright (c) 2025 by Tenebris Technologies Inc. This software is licensed under the MIT License. Please see LICENSE for details.
+**CAUTION**: This library does not implement authentication. For production use:
+- Stdio mode: Relies on OS-level process isolation
+- HTTP/SSE modes: Implement your own authentication middleware
 
-## No Warranty (zilch, none, void, nil, null, "", {}, 0x00, 0b00000000, EOF)
+Do not expose HTTP/SSE servers to untrusted networks without proper authentication.
 
-THIS SOFTWARE IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+## Copyright and License
 
-Made in Canada
+Copyright (c) 2025 by Tenebris Technologies Inc.
+Licensed under the MIT License. See LICENSE for details.
+
+## No Warranty
+
+THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Made in Canada 🍁

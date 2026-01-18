@@ -11,15 +11,16 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// AddResources registers all resources from resource providers
 func (m *MCPServer) AddResources() {
 
 	// Iterate over resource providers and register their resources
 	for _, provider := range m.resourceProviders {
 
-		// Call the Register function of the provider to get tool definitions
+		// Call the Register function of the provider to get resource definitions
 		resourceDefinitions := provider.RegisterResources()
 
-		// Iterate over the tool definitions and register each tool
+		// Iterate over the resource definitions and register each resource
 		for _, resource := range resourceDefinitions {
 
 			newResource := mcp.NewResource(
@@ -39,7 +40,7 @@ func (m *MCPServer) AddResources() {
 						options = make(map[string]any)
 					}
 
-					// Execute the tool's handler, passing the options
+					// Execute the resource handler, passing the options
 					resp, err := resource.Handler(request.Params.URI, options)
 					if err != nil {
 						return nil, err
@@ -56,15 +57,16 @@ func (m *MCPServer) AddResources() {
 	}
 }
 
+// AddResourceTemplates registers all resource templates from resource providers
 func (m *MCPServer) AddResourceTemplates() {
 
 	// Iterate over resource providers and register their templates
 	for _, provider := range m.resourceProviders {
 
-		// Call the Register function of the provider to get tool definitions
+		// Call the Register function of the provider to get resource template definitions
 		resourceTemplates := provider.RegisterResourceTemplates()
 
-		// Iterate over the tool definitions and register each tool
+		// Iterate over the resource template definitions and register each template
 		for _, resourceTemplate := range resourceTemplates {
 
 			template := mcp.NewResourceTemplate(
@@ -82,7 +84,7 @@ func (m *MCPServer) AddResourceTemplates() {
 						options = make(map[string]any)
 					}
 
-					// Execute the tool's handler, passing the options
+					// Execute the resource template handler, passing the options
 					resp, err := resourceTemplate.Handler(request.Params.URI, options)
 					if err != nil {
 						return nil, err
