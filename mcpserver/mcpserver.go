@@ -44,6 +44,9 @@ type MCPServer struct {
 	resourceProviders []mcptypes.ResourceProvider
 	promptProviders   []mcptypes.PromptProvider
 
+	// Authentication
+	bearerTokenValidator mcptypes.BearerTokenValidator
+
 	// Default hint values (Level 2 configuration)
 	defaultReadOnlyHint    *bool
 	defaultDestructiveHint *bool
@@ -142,9 +145,16 @@ func (m *MCPServer) Start() error {
 			defer m.wg.Done()
 			m.logger.Infof("MCP server listening on %s (SSE mode)", m.listen)
 			m.sseServer = server.NewSSEServer(m.srv)
-			err := m.sseServer.Start(m.listen)
-			// Ignore error - expected during shutdown
-			_ = err
+
+			// Wrap with authentication if configured
+			if m.bearerTokenValidator != nil {
+				handler := wrapHTTPHandlerWithAuth(m.sseServer, m.bearerTokenValidator, m.logger)
+				err := startHTTPServerWithHandler(m.listen, handler)
+				_ = err
+			} else {
+				err := m.sseServer.Start(m.listen)
+				_ = err
+			}
 		}()
 		return nil
 
@@ -156,9 +166,16 @@ func (m *MCPServer) Start() error {
 			defer m.wg.Done()
 			m.logger.Infof("MCP server listening on %s (HTTP mode)", m.listen)
 			m.httpServer = server.NewStreamableHTTPServer(m.srv)
-			err := m.httpServer.Start(m.listen)
-			// Ignore error - expected during shutdown
-			_ = err
+
+			// Wrap with authentication if configured
+			if m.bearerTokenValidator != nil {
+				handler := wrapHTTPHandlerWithAuth(m.httpServer, m.bearerTokenValidator, m.logger)
+				err := startHTTPServerWithHandler(m.listen, handler)
+				_ = err
+			} else {
+				err := m.httpServer.Start(m.listen)
+				_ = err
+			}
 		}()
 		return nil
 

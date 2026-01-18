@@ -26,3 +26,25 @@ func withRequestLogging(logger mcptypes.Logger) server.ServerOption {
 		}
 	})
 }
+
+// withBearerTokenAuth is a middleware function that validates bearer tokens.
+func withBearerTokenAuth(validator mcptypes.BearerTokenValidator, logger mcptypes.Logger) server.ServerOption {
+	return server.WithToolHandlerMiddleware(func(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			// Call validator
+			contextData, err := validator("")
+			if err != nil {
+				logger.Warningf("Bearer token validation failed: %v", err)
+				return mcp.NewToolResultError("Authentication required"), err
+			}
+
+			// Add auth context data to context
+			for key, value := range contextData {
+				ctx = context.WithValue(ctx, key, value)
+			}
+
+			// Call next handler with enriched context
+			return next(ctx, request)
+		}
+	})
+}

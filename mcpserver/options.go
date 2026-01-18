@@ -103,6 +103,15 @@ func WithPromptProviders(providers []mcptypes.PromptProvider) Option {
 	}
 }
 
+// Authentication options
+
+// WithBearerTokenAuth enables bearer token authentication
+func WithBearerTokenAuth(validator mcptypes.BearerTokenValidator) Option {
+	return func(m *MCPServer) {
+		m.bearerTokenValidator = validator
+	}
+}
+
 // Hint default configuration options
 
 // WithDefaultReadOnlyHint sets the default ReadOnlyHint for all tools

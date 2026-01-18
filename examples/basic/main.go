@@ -6,8 +6,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/PivotLLM/MCPLaunchPad/mcpserver"
 	"github.com/PivotLLM/MCPLaunchPad/mcptypes"
@@ -44,7 +47,26 @@ func (s *SimpleProvider) GetGreeting(options map[string]any) (string, error) {
 	return fmt.Sprintf("Hello, %s!", name), nil
 }
 
+// createBearerTokenValidator creates a simple bearer token validator
+func createBearerTokenValidator(expectedToken string) mcptypes.BearerTokenValidator {
+	return func(token string) (map[string]any, error) {
+		if token != expectedToken {
+			return nil, fmt.Errorf("invalid token")
+		}
+		// Return context data that will be available to handlers
+		return map[string]any{
+			"authenticated": true,
+			"token":         token,
+		}, nil
+	}
+}
+
 func main() {
+	// Parse command line flags
+	token := flag.String("token", "", "Bearer token for authentication (if empty, no auth required)")
+	listen := flag.String("listen", "localhost:8080", "Address to listen on for HTTP mode")
+	flag.Parse()
+
 	// Create logger
 	logger, err := mlogger.New(
 		mlogger.WithPrefix("BasicMCP"),
@@ -61,21 +83,42 @@ func main() {
 	// Create provider
 	provider := &SimpleProvider{}
 
-	// Create MCP server with stdio transport
-	srv, err := mcpserver.New(
-		mcpserver.WithTransportStdio(),
+	// Build server options
+	opts := []mcpserver.Option{
+		mcpserver.WithTransportHTTP(*listen),
 		mcpserver.WithLogger(logger),
 		mcpserver.WithName("BasicMCP"),
 		mcpserver.WithVersion("1.0.0"),
 		mcpserver.WithToolProviders([]mcptypes.ToolProvider{provider}),
 		mcpserver.WithDefaultReadOnlyHint(false),
-	)
+	}
+
+	// Add bearer token authentication if token is provided
+	if *token != "" {
+		logger.Infof("Bearer token authentication enabled")
+		opts = append(opts, mcpserver.WithBearerTokenAuth(createBearerTokenValidator(*token)))
+	} else {
+		logger.Info("No authentication configured")
+	}
+
+	// Create MCP server
+	srv, err := mcpserver.New(opts...)
 	if err != nil {
 		logger.Fatalf("Failed to create MCP server: %v", err)
 	}
 
-	// Start server (blocks until EOF in stdio mode)
+	// Start server (runs in background for HTTP mode)
 	if err := srv.Start(); err != nil {
 		logger.Fatalf("Server failed: %v", err)
+	}
+
+	// Wait for interrupt signal
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	<-sigChan
+
+	logger.Info("Shutting down...")
+	if err := srv.Stop(); err != nil {
+		logger.Errorf("Error during shutdown: %v", err)
 	}
 }
