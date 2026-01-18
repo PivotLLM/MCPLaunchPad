@@ -205,7 +205,7 @@ mcptypes.ObjectParam("config", "Configuration", true,
 
 See the `examples/` directory:
 
-- **examples/basic/** - Minimal stdio server with single tool
+- **examples/bearer/** - HTTP server with bearer token authentication
 
 ## Documentation
 
@@ -221,19 +221,24 @@ See the `examples/` directory:
 
 ```bash
 # Build example
-cd examples/basic
+cd examples/bearer
 go build
 
-# Test with probe tool
-probe -stdio ./basic -list-only
-probe -stdio ./basic -call greet -params '{"name":"World"}'
+# Test without authentication
+./bearer &
+probe -transport http -url http://localhost:8080/mcp -list-only
+
+# Test with bearer token authentication
+./bearer --token "mytoken123" &
+probe -transport http -url http://localhost:8080/mcp -headers "Authorization:Bearer mytoken123" -list-only
 ```
 
 ## Security Note
 
-**CAUTION**: This library does not implement authentication. For production use:
-- Stdio mode: Relies on OS-level process isolation
-- HTTP/SSE modes: Implement your own authentication middleware
+Authentication support:
+- **Bearer Token**: Built-in support via `WithBearerTokenAuth()` option
+- **OAuth2**: Implement using `OAuth2Provider` interface (see [AUTHENTICATION.md](AUTHENTICATION.md))
+- **Stdio mode**: Relies on OS-level process isolation
 
 Do not expose HTTP/SSE servers to untrusted networks without proper authentication.
 
