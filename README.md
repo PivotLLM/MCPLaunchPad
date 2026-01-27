@@ -1,6 +1,8 @@
 # MCPLaunchPad
 
-A production-ready Go library for building MCP (Model Context Protocol) servers with a clean, extensible architecture.
+**OATH2 functionality has not been fully tested**
+
+Go library for building MCP (Model Context Protocol) servers with a clean, extensible architecture.
 
 ## Features
 
